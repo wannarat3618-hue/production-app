@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบเก็บข้อมูลการผลิต</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231a1a2e'/><rect x='20' y='55' width='15' height='30' rx='3' fill='%2300d4aa'/><rect x='42' y='35' width='15' height='50' rx='3' fill='%2300d4aa'/><rect x='64' y='20' width='15' height='65' rx='3' fill='%2300d4aa'/></svg>">
+<style>
+:root {
+  --bg:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;
+  --accent:#00d4aa;--accent2:#0f9b76;
+  --accent-dim:rgba(0,212,170,0.12);--accent-dim2:rgba(0,212,170,0.05);
+  --text:#e8e8f0;--text2:#8888aa;--text3:#555577;
+  --border:rgba(0,212,170,0.15);--border2:rgba(255,255,255,0.06);
+  --danger:#ff6b6b;--danger-dim:rgba(255,107,107,0.12);
+  --warning:#ffd166;--warning-dim:rgba(255,209,102,0.12);
+  --radius:12px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,170,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.container{max-width:980px;margin:0 auto;padding:1.5rem;position:relative;z-index:1}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)}
+.header-left{display:flex;align-items:center;gap:14px}
+.app-icon{width:46px;height:46px;background:var(--accent-dim);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center}
+.app-icon svg{width:26px;height:26px}
+.app-title{font-size:20px;font-weight:700;letter-spacing:-0.3px}
+.app-sub{font-size:12px;color:var(--text2);margin-top:1px;font-family:'IBM Plex Mono',monospace}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid;font-family:'IBM Plex Mono',monospace;transition:all .3s}
+.pill-ok{background:rgba(0,212,170,0.1);color:var(--accent);border-color:rgba(0,212,170,0.3)}
+.pill-err{background:var(--danger-dim);color:var(--danger);border-color:rgba(255,107,107,0.3)}
+.pill-loading{background:var(--warning-dim);color:var(--warning);border-color:rgba(255,209,102,0.3)}
+.pill-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.tabs{display:flex;gap:2px;margin-bottom:1.5rem;background:var(--bg2);border-radius:var(--radius);padding:4px;border:1px solid var(--border2)}
+.tab{flex:1;padding:9px 12px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);border-radius:var(--radius-sm);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Sarabun',sans-serif}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--accent-dim);color:var(--accent)}
+.tab svg{width:15px;height:15px}
+.card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.card-title svg{width:14px;height:14px;color:var(--accent)}
+.section{display:none}.section.active{display:block}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-size:12px;font-weight:700;color:var(--text2);letter-spacing:0.4px}
+input,select{width:100%;padding:10px 12px;font-size:14px;font-family:'Sarabun',sans-serif;background:var(--bg3);color:var(--text);border:1px solid var(--border2);border-radius:var(--radius-sm);transition:all .2s;outline:none;-webkit-appearance:none}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+select option{background:var(--bg2)}
+.btn{padding:10px 18px;font-size:13px;font-weight:700;font-family:'Sarabun',sans-serif;border-radius:var(--radius-sm);cursor:pointer;border:1px solid;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn svg{width:14px;height:14px}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--border2)}
+.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.15);background:var(--bg3)}
+.btn-primary{background:var(--accent);color:#0f0f1a;border-color:var(--accent)}
+.btn-primary:hover{background:#00f0c0;transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,212,170,0.3)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-danger{background:transparent;color:var(--danger);border-color:rgba(255,107,107,0.25)}
+.btn-danger:hover{background:var(--danger-dim)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1rem}
+.metric{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:1rem;position:relative;overflow:hidden}
+.metric::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);opacity:0.4}
+.metric-icon{font-size:20px;margin-bottom:8px}
+.metric-val{font-size:24px;font-weight:700;color:var(--accent);font-family:'IBM Plex Mono',monospace}
+.metric-lbl{font-size:11px;color:var(--text2);margin-top:3px;font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;font-size:11px;font-weight:700;letter-spacing:0.5px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border2)}
+td{padding:11px 12px;border-bottom:1px solid var(--border2);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--accent-dim2)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.badge-ok{background:rgba(0,212,170,0.12);color:var(--accent)}
+.badge-pending{background:var(--warning-dim);color:var(--warning)}
+.td-actions{display:flex;gap:6px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bar-lbl{font-size:12px;color:var(--text2);width:90px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;background:var(--bg3);border-radius:999px;height:8px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:999px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.bar-val{font-size:11px;font-weight:600;color:var(--accent);font-family:'IBM Plex Mono',monospace;min-width:60px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;width:440px;max-width:95vw;animation:slideUp .2s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:1.25rem;display:flex;align-items:center;gap:8px}
+.modal-title svg{width:18px;height:18px;color:var(--accent)}
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;opacity:0;transform:translateY(10px);transition:all .3s;z-index:200;pointer-events:none;border:1px solid;display:flex;align-items:center;gap:8px;max-width:320px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:rgba(0,212,170,0.15);color:var(--accent);border-color:rgba(0,212,170,0.3)}
+.toast.error{background:var(--danger-dim);color:var(--danger);border-color:rgba(255,107,107,0.3)}
+.toast.info{background:var(--bg2);color:var(--text);border-color:var(--border)}
+.toast svg{width:15px;height:15px;flex-shrink:0}
+.empty{text-align:center;padding:2.5rem;color:var(--text3);font-size:13px}
+.empty svg{width:40px;height:40px;margin:0 auto 10px;display:block;opacity:0.3}
+.loading-row{text-align:center;padding:2rem;color:var(--text2);font-size:13px}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:500;background:var(--bg3);color:var(--text2);border:1px solid var(--border2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--danger);color:var(--danger)}
+.hint{background:var(--accent-dim2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--text2);line-height:1.6}
+.search-row{display:flex;gap:8px;margin-bottom:12px}
+.search-row input{flex:1}
+.recent-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border2);font-size:13px;gap:8px}
+.recent-row:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="app-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          <polyline points="7,9 10,12 13,9 17,13"/>
+        </svg>
+      </div>
+      <div>
+        <div class="app-title">ระบบเก็บข้อมูลการผลิต</div>
+        <div class="app-sub">Production Data Management · Shared Database</div>
+      </div>
+    </div>
+    <div class="status-pill pill-loading" id="status-pill">
+      <span class="pill-dot"></span>
+      <span id="status-text">กำลังเชื่อมต่อ...</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('form')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>บันทึกข้อมูล
+    </button>
+    <button class="tab" onclick="switchTab('history')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>ประวัติ
+    </button>
+    <button class="tab" onclick="switchTab('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard
+    </button>
+    <button class="tab" onclick="switchTab('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>ตั้งค่า
+    </button>
+  </div>
+
+  <!-- FORM -->
+  <div class="section active" id="sec-form">
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        กรอกข้อมูลการผลิต
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>📅 วันที่</label><input type="date" id="f-date"></div>
+        <div class="form-group"><label>⚙️ เครื่องจักร</label><select id="f-machine"><option value="">-- เลือกเครื่องจักร --</option></select></div>
+        <div class="form-group"><label>📦 ผลิตภัณฑ์</label><select id="f-product"><option value="">-- เลือกผลิตภัณฑ์ --</option></select></div>
+        <div class="form-group"><label>⚖️ ผลผลิต (kg)</label><input type="number" id="f-output" placeholder="0.00" min="0" step="0.01"></div>
+        <div class="form-group full btn-actions">
+          <button class="btn btn-ghost" onclick="clearForm()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>ล้างข้อมูล
+          </button>
+          <button class="btn btn-primary" id="save-btn" onclick="saveRecord()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13"/><polyline points="7,3 7,8 15,8"/></svg>บันทึก → Google Sheets
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+        บันทึกล่าสุด (จาก Google Sheets)
+      </div>
+      <div id="recent-list"><div class="loading-row"><span class="spinner"></span>กำลังโหลด...</div></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="section" id="sec-history">
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        ประวัติทั้งหมด (Google Sheets)
+      </div>
+      <div class="search-row">
+        <input type="text" id="search" placeholder="🔍  ค้นหา..." oninput="renderHistory()">
+        <button class="btn btn-ghost btn-sm" onclick="loadData()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>รีเฟรช
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV
+        </button>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>วันที่</th><th>เครื่องจักร</th><th>ผลิตภัณฑ์</th><th>ผลผลิต (kg)</th><th>เวลาบันทึก</th><th>จัดการ</th></tr></thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+      <div id="history-empty" class="empty" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        ยังไม่มีข้อมูล
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="section" id="sec-dashboard">
+    <div class="metrics">
+      <div class="metric"><div class="metric-icon">📋</div><div class="metric-val" id="d-total">-</div><div class="metric-lbl">รายการทั้งหมด</div></div>
+      <div class="metric"><div class="metric-icon">⚖️</div><div class="metric-val" id="d-output">-</div><div class="metric-lbl">ผลผลิตรวม (kg)</div></div>
+      <div class="metric"><div class="metric-icon">📊</div><div class="metric-val" id="d-avg">-</div><div class="metric-lbl">เฉลี่ยต่อรายการ (kg)</div></div>
+      <div class="metric"><div class="metric-icon">⚙️</div><div class="metric-val" id="d-machines">-</div><div class="metric-lbl">เครื่องจักรที่ใช้</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card">
+        <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>ผลผลิตตามเครื่องจักร</div>
+        <div id="chart-machine"><div class="empty">ยังไม่มีข้อมูล</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>ผลผลิตตามผลิตภัณฑ์</div>
+        <div id="chart-product"><div class="empty">ยังไม่มีข้อมูล</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="section" id="sec-settings">
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>จัดการ Dropdown</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:8px;font-weight:700">⚙️ เครื่องจักร</label>
+          <div id="machine-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+          <div style="display:flex;gap:6px"><input type="text" id="new-machine" placeholder="ชื่อเครื่องจักร" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="addOption('machine')">+ เพิ่ม</button></div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:8px;font-weight:700">📦 ผลิตภัณฑ์</label>
+          <div id="product-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+          <div style="display:flex;gap:6px"><input type="text" id="new-product" placeholder="ชื่อผลิตภัณฑ์" style="flex:1"><button class="btn btn-ghost btn-sm" onclick="addOption('product')">+ เพิ่ม</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export ข้อมูล</div>
+      <button class="btn btn-primary btn-sm" onclick="exportCSV()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download CSV
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>แก้ไขข้อมูล</div>
+    <div class="form-grid">
+      <div class="form-group"><label>📅 วันที่</label><input type="date" id="e-date"></div>
+      <div class="form-group"><label>⚙️ เครื่องจักร</label><select id="e-machine"></select></div>
+      <div class="form-group"><label>📦 ผลิตภัณฑ์</label><select id="e-product"></select></div>
+      <div class="form-group"><label>⚖️ ผลผลิต (kg)</label><input type="number" id="e-output" step="0.01"></div>
+    </div>
+    <div class="btn-actions" style="margin-top:1rem">
+      <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveEdit()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13"/><polyline points="7,3 7,8 15,8"/></svg>บันทึก
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GS_URL = "https://script.google.com/macros/s/AKfycbyHj4yZAyBnhQPPAwsjnekG1SZCwdy5Wm41sPQJOoZki12qdfW1lFl7PijpCRPS_KAr/exec";
+
+let allRecords = [];
+let machines = JSON.parse(localStorage.getItem('prod_machines')||'["Machine A","Machine B","Machine C"]');
+let products = JSON.parse(localStorage.getItem('prod_products')||'["Product X","Product Y","Product Z"]');
+let editId = null;
+
+function saveLocal(){
+  localStorage.setItem('prod_machines',JSON.stringify(machines));
+  localStorage.setItem('prod_products',JSON.stringify(products));
+}
+
+function setStatus(type, text){
+  const el = document.getElementById('status-pill');
+  const tx = document.getElementById('status-text');
+  el.className = 'status-pill ' + (type==='ok'?'pill-ok':type==='err'?'pill-err':'pill-loading');
+  tx.textContent = text;
+}
+
+function toast(msg, type='info'){
+  const t = document.getElementById('toast');
+  const icons = {
+    success:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>',
+    error:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+  };
+  t.innerHTML = (icons[type]||'') + msg;
+  t.className = 'toast '+type+' show';
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+async function loadData(){
+  setStatus('loading','กำลังโหลด...');
+  try {
+    const res = await fetch(GS_URL + '?action=read');
+    const json = await res.json();
+    if(json.status === 'ok' && json.data.length > 1){
+      const rows = json.data.slice(1);
+      allRecords = rows.map(r=>({
+        id: r[0], date: r[1], machine: r[2],
+        product: r[3], output: r[4], time: r[5]||''
+      })).reverse();
+      setStatus('ok','เชื่อมต่อ Google Sheets แล้ว');
+    } else {
+      allRecords = [];
+      setStatus('ok','เชื่อมต่อแล้ว (ยังไม่มีข้อมูล)');
+    }
+    renderRecent();
+    const cur = document.querySelector('.tab.active');
+    if(cur) {
+      const tabs = ['form','history','dashboard','settings'];
+      document.querySelectorAll('.tab').forEach((b,i)=>{if(b===cur && tabs[i]==='history')renderHistory();if(b===cur && tabs[i]==='dashboard')renderDashboard();});
+    }
+  } catch(e){
+    setStatus('err','เชื่อมต่อไม่ได้');
+    toast('ไม่สามารถโหลดข้อมูลได้ ตรวจสอบการเชื่อมต่อ','error');
+  }
+}
+
+async function postData(payload){
+  const res = await fetch(GS_URL, {
+    method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body: JSON.stringify(payload)
+  });
+  return true;
+}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((b,i)=>{
+    const ids=['form','history','dashboard','settings'];
+    b.classList.toggle('active', ids[i]===t);
+  });
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  if(t==='history'){loadData().then(renderHistory)}
+  if(t==='dashboard'){loadData().then(renderDashboard)}
+  if(t==='settings')renderSettings();
+}
+
+function setToday(){
+  const d = document.getElementById('f-date');
+  if(!d.value) d.value = new Date().toISOString().split('T')[0];
+}
+
+function populateSelects(){
+  ['f-machine','f-product'].forEach((id,i)=>{
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    const list = i===0 ? machines : products;
+    sel.innerHTML = '<option value="">-- เลือก'+(i===0?'เครื่องจักร':'ผลิตภัณฑ์')+' --</option>'+
+      list.map(o=>`<option${o===cur?' selected':''}>${o}</option>`).join('');
+  });
+}
+
+async function saveRecord(){
+  const d = document.getElementById('f-date').value;
+  const m = document.getElementById('f-machine').value;
+  const p = document.getElementById('f-product').value;
+  const o = document.getElementById('f-output').value;
+  if(!d||!m||!p||!o){toast('กรุณากรอกข้อมูลให้ครบทุกช่อง','error');return}
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>กำลังบันทึก...';
+  try {
+    const rec = {id: Date.now(), date: d, machine: m, product: p, output: parseFloat(o).toFixed(2)};
+    await postData(rec);
+    await new Promise(r=>setTimeout(r,1000));
+    await loadData();
+    clearForm(); toast('บันทึกข้อมูลสำเร็จ → Google Sheets','success');
+  } catch(e){
+    toast('บันทึกไม่สำเร็จ กรุณาลองใหม่','error');
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13"/><polyline points="7,3 7,8 15,8"/></svg>บันทึก → Google Sheets';
+}
+
+function clearForm(){
+  document.getElementById('f-machine').value='';
+  document.getElementById('f-product').value='';
+  document.getElementById('f-output').value='';
+}
+
+function renderRecent(){
+  const el = document.getElementById('recent-list');
+  const r = allRecords.slice(0,3);
+  if(!r.length){el.innerHTML='<div class="empty">ยังไม่มีข้อมูล</div>';return}
+  el.innerHTML = r.map(x=>`
+    <div class="recent-row">
+      <span style="color:var(--text2);font-size:12px;font-family:'IBM Plex Mono',monospace">${x.date}</span>
+      <span>${x.machine}</span>
+      <span style="color:var(--text2)">${x.product}</span>
+      <span style="color:var(--accent);font-weight:700;font-family:'IBM Plex Mono',monospace">${x.output} kg</span>
+    </div>`).join('');
+}
+
+function renderHistory(){
+  const q = (document.getElementById('search')||{}).value||'';
+  const filtered = allRecords.filter(r=>`${r.date}${r.machine}${r.product}`.toLowerCase().includes(q.toLowerCase()));
+  const body = document.getElementById('history-body');
+  const empty = document.getElementById('history-empty');
+  if(!filtered.length){body.innerHTML='';empty.style.display='block';return}
+  empty.style.display='none';
+  body.innerHTML = filtered.map(r=>`
+    <tr>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:12px">${r.date}</td>
+      <td>${r.machine}</td><td>${r.product}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;color:var(--accent);font-weight:700">${r.output} kg</td>
+      <td style="font-size:11px;color:var(--text2)">${r.time}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openEdit('${r.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>แก้ไข
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRec('${r.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>ลบ
+        </button>
+      </div></td>
+    </tr>`).join('');
+}
+
+async function deleteRec(id){
+  if(!confirm('ยืนยันการลบรายการนี้?'))return;
+  try{
+    await postData({action:'delete', id: id});
+    await new Promise(r=>setTimeout(r,1000));
+    await loadData(); renderHistory();
+    toast('ลบรายการแล้ว','info');
+  }catch(e){toast('ลบไม่สำเร็จ','error')}
+}
+
+function openEdit(id){
+  const r = allRecords.find(x=>String(x.id)===String(id));
+  if(!r)return;
+  editId = id;
+  document.getElementById('e-date').value = r.date;
+  document.getElementById('e-machine').innerHTML = machines.map(o=>`<option${o===r.machine?' selected':''}>${o}</option>`).join('');
+  document.getElementById('e-product').innerHTML = products.map(o=>`<option${o===r.product?' selected':''}>${o}</option>`).join('');
+  document.getElementById('e-output').value = r.output;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(){document.getElementById('modal').classList.remove('open');editId=null}
+
+async function saveEdit(){
+  const payload = {
+    action:'update', id: editId,
+    date: document.getElementById('e-date').value,
+    machine: document.getElementById('e-machine').value,
+    product: document.getElementById('e-product').value,
+    output: parseFloat(document.getElementById('e-output').value).toFixed(2)
+  };
+  try{
+    await postData(payload);
+    await new Promise(r=>setTimeout(r,1000));
+    await loadData(); closeModal(); renderHistory();
+    toast('แก้ไขข้อมูลสำเร็จ','success');
+  }catch(e){toast('แก้ไขไม่สำเร็จ','error')}
+}
+
+function renderDashboard(){
+  const total = allRecords.length;
+  const totalKg = allRecords.reduce((s,r)=>s+parseFloat(r.output||0),0);
+  document.getElementById('d-total').textContent = total;
+  document.getElementById('d-output').textContent = totalKg.toFixed(1);
+  document.getElementById('d-avg').textContent = total?(totalKg/total).toFixed(1):'0';
+  document.getElementById('d-machines').textContent = new Set(allRecords.map(r=>r.machine)).size;
+  renderBar('chart-machine', groupBy('machine'));
+  renderBar('chart-product', groupBy('product'));
+}
+
+function groupBy(key){
+  const m={};
+  allRecords.forEach(r=>{m[r[key]]=(m[r[key]]||0)+parseFloat(r.output||0)});
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+
+function renderBar(id, data){
+  const el = document.getElementById(id);
+  if(!data.length){el.innerHTML='<div class="empty">ยังไม่มีข้อมูล</div>';return}
+  const max = Math.max(...data.map(d=>d[1]));
+  el.innerHTML = data.map(([k,v])=>`
+    <div class="bar-row">
+      <span class="bar-lbl">${k}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/max*100)}%"></div></div>
+      <span class="bar-val">${v.toFixed(1)}</span>
+    </div>`).join('');
+}
+
+function renderSettings(){
+  document.getElementById('machine-list').innerHTML = machines.map(m=>`<span class="chip" onclick="removeOption('machine','${m}')">${m} ×</span>`).join('');
+  document.getElementById('product-list').innerHTML = products.map(p=>`<span class="chip" onclick="removeOption('product','${p}')">${p} ×</span>`).join('');
+}
+
+function addOption(type){
+  const inp = document.getElementById('new-'+type);
+  const val = inp.value.trim(); if(!val)return;
+  if(type==='machine'&&!machines.includes(val)) machines.push(val);
+  if(type==='product'&&!products.includes(val)) products.push(val);
+  saveLocal(); populateSelects(); renderSettings(); inp.value='';
+  toast('เพิ่มรายการแล้ว','success');
+}
+
+function removeOption(type,val){
+  if(type==='machine') machines=machines.filter(m=>m!==val);
+  if(type==='product') products=products.filter(p=>p!==val);
+  saveLocal(); populateSelects(); renderSettings();
+}
+
+function exportCSV(){
+  if(!allRecords.length){toast('ไม่มีข้อมูล','error');return}
+  const rows=[['วันที่','เครื่องจักร','ผลิตภัณฑ์','ผลผลิต (kg)','เวลาบันทึก'],
+    ...allRecords.map(r=>[r.date,r.machine,r.product,r.output,r.time])];
+  const csv = rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download = 'production_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click(); toast('Export CSV สำเร็จ','success');
+}
+
+setToday(); populateSelects(); renderSettings(); loadData();
+setInterval(loadData, 60000);
+</script>
+</body>
+</html>
